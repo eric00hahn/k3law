@@ -37,8 +37,8 @@ def getGesetz(soup) :
   title = findBetween(title, '<h1>', '<br')
   return title
 
-def getGesetze() :
-  root = etree.parse('index.xml').getroot()
+def getGesetze(xml_filename) :
+  root = etree.parse(xml_filename).getroot()
   text = root.xpath('//text()')
   gesetze = []
   for t in text :
