@@ -1,7 +1,14 @@
 import requests
-from bs4 import BeautifulSoup, SoupStrainer
+from bs4 import BeautifulSoup
 from lxml import etree
-import time
+
+def findBetween(s, first, last):
+  try:
+    start = s.index(first) + len(first)
+    end = s.index(last, start)
+    return s[start:end]
+  except ValueError:
+    return ''
 
 def getParagraph(soup) :
   paragraph = soup.find_all('span')
@@ -30,17 +37,9 @@ def getGesetz(soup) :
   title = findBetween(title, '<h1>', '<br')
   return title
 
-def findBetween(s, first, last):
-  try:
-    start = s.index(first) + len(first)
-    end = s.index(last, start)
-    return s[start:end]
-  except ValueError:
-    return ""
-
 def getGesetze() :
   root = etree.parse('index.xml').getroot()
-  text = root.xpath("//text()")
+  text = root.xpath('//text()')
   gesetze = []
   for t in text :
     if 'http' in str(t) :
@@ -50,7 +49,7 @@ def getGesetze() :
 def writeIndexXML(filename) :
   url_index = 'https://www.gesetze-im-internet.de/gii-toc.xml'
   response = requests.get(url_index)
-  myfile = open(filename, "w")
+  myfile = open(filename, 'w')
   myfile.write(response.text)
   return None
 
