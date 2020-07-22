@@ -1,6 +1,8 @@
+import json
 import requests
 from bs4 import BeautifulSoup
 from lxml import etree
+import re
 
 def findBetween(s, first, last):
   try:
@@ -32,7 +34,7 @@ def getContent(soup) :
       content += '\n'
   return content
 
-def getGesetz(soup) :
+def getGesetzestitel(soup) :
   title = str(soup.find('h1'))
   title = findBetween(title, '<h1>', '<br')
   return title
@@ -68,12 +70,41 @@ def getRelevantLinks(soup) :
       relevant_links += [l]
   return relevant_links
 
+def appendToDictionary(dictionary, soup, g) :
+  gesetzestitel = getGesetzestitel(soup)
+  paragraphentitel = getParagraph(soup)
+  paragraph = getContent(soup)
+
+  if len(paragraph) > 2 :
+    paragraphnummer = re.search(r'\d+', paragraphentitel).group()
+    dictionary['gesetze'].append({'gesetzestitel' : gesetzestitel,
+                                  'gesetzeskürzel' : g,
+                                  'paragraphtitel' : paragraphentitel,
+                                  'paragraphnummer' : paragraphnummer,
+                                  'paragraph' : paragraph
+                                })
+  return None
+
 if __name__ == '__main__' :
 
   url0 = 'https://www.gesetze-im-internet.de/'
-  g = 'bgb'
 
-  G = getGesetze()
+  bund = {}
+  bund['gesetze'] = []
 
-  response = requests.get(url0 + g + '/index.html')
-  soup = BeautifulSoup(response.text, 'html')
+  G = getGesetze('index.xml')
+  counter = 1
+  for g in G :
+    print(counter, g)
+    counter += 1
+
+    response = requests.get(url0 + g + '/index.html')
+    index_soup = BeautifulSoup(response.text, 'html')
+
+    for l in getRelevantLinks(index_soup) :
+      content_response = requests.get(url0 + g + '/' + l)
+      content_soup = BeautifulSoup(content_response.text, 'html')
+      appendToDictionary(bund, content_soup, g)
+
+  with open('bund.json', 'w') as outfile :
+    json.dump(bund, outfile)
